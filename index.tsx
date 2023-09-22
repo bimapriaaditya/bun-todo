@@ -1,3 +1,5 @@
+import { renderToString } from "react-dom/server";
+
 const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 3000,
@@ -16,6 +18,19 @@ async function fetchHandler(request: Request): Promise<Response> {
         return new Response(Bun.file("index.html"))
     }
 
+    if (url.pathname === "/todos" && request.method === "GET") {
+        return new Response(renderToString(<TodoList todos={todos} />));
+    }
+
+    if (url.pathname === "/todos" && request.method === "POST") {
+        const { todo } = await request.json();
+        todos.push({
+            id: todos.length + 1,
+            name: todo
+        });
+        return new Response(renderToString(<TodoList todos={todos} />));
+    }
+
     return new Response("Not Found", {
         status: 404
     });
@@ -25,7 +40,7 @@ function TodoList(props: { todos: Todo[] }) {
     return (
         <ul>
             { props.todos.length
-                ? props.todos.map((todo) => <li key={`todo-${id}`}>{todo.id}</li>)
+                ? props.todos.map((todo) => <li key={`todo-${todo.id}`}>{todo.name}</li>)
                 : "No todos found"}
         </ul>
     );
